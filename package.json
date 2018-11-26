@@ -1,20 +1,16 @@
 {
-  "name": "NodeScraper",
+  "name": "nodescraper",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "main": "scraper.js",
   "dependencies": {
-    "cheerio": "^1.0.0-rc.2",
+    "azure-storage": "^2.10.2",
     "puppeteer": "^1.10.0",
-    "request": "^2.88.0",
-    "request-promise": "^4.2.2"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@types/puppeteer": "^1.10.0",
-    "@types/request-promise": "^4.1.42"
-  },
-  "scripts": {
-    "test": "node scraper.js"
+    "@types/puppeteer": "^1.10.0"
   },
   "keywords": [],
   "author": "",
