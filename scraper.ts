@@ -1,35 +1,70 @@
 import puppeteer = require('puppeteer');
 
- const urls = ['https://www.bol.com/nl/p/starbook-boeklamp-premium-lichthouten-cover-warm-wit-licht-relatiegeschenk-tafellamp/9200000101823319/?suggestionType=typedsearch&bltgh=lHJId9KPg14NsufrofBFfg.1.2.ProductTitle',
-               'https://www.bol.com/nl/p/dunlop-led-fietslampen-set-zwart-rood/9200000049684295/?suggestionType=typedsearch&bltgh=k1TYkLxOYDzVeZ0DwQNOAA.1.4.ProductImage#modal_open'];
+const timeout = 1000;
+const eanCodes = ['8711252416793', '2950001557127'];
+
 puppeteer.launch().then(async browser => {
   try {
-    for (let url of urls) {
+    // Loop every ean code.
+    for (let ean of eanCodes) {
+      // Open a new page.
       const page = await browser.newPage();
-      await page.goto(url);
+      await page.goto('https://www.bol.com/nl/');
       
-      await page.evaluate(() => {
-          let elements = document.getElementsByClassName('btn--buy');
-          var buyBtn = elements.item(0) as HTMLAnchorElement; 
-          buyBtn.click();
-      });
-    
-      console.log("Buy btn clicked");
-  
-      await page.waitFor(500);
+      // Search for an EAN code.
+      console.log("Searching for: " + ean);
+      await page.focus('#searchfor');
+      await page.keyboard.type(ean);
+
+      var searchBtn = await page.$("[data-test='search-button']");
+      await searchBtn.click();
+
+      await page.waitFor(timeout);
+
+      // Log the current url.
+      var url = page.url();
+      console.log("Page at: " + url);
+
+      // Hit the buy btn.
+      var buyBtn = await page.$(".btn--buy");
+      if (buyBtn){
+        console.log("Product in basket.");
+        buyBtn.click();
+      } else {
+        console.log("Product not added to basket.");
+        continue;
+      }
+
+      await page.waitFor(timeout);
+
+      // Close the modal.
+      var modalClose = await page.$("[data-test='modal-window-close']");
+      modalClose.click();
       
-      const orderBtn = await page.$('a[href="/nl/order/basket.html"]');
-      
-      const label = await page.evaluate(el => el.innerText, orderBtn);
-      console.log(label);
-      await orderBtn.click();
-    
-      console.log("Ordered");
-  
-      await page.waitFor(2500);
-  
+      await page.waitFor(timeout);
+
+      // Get the title
+      var titleElement = await page.$("[data-test='title']");
+      const title = await page.evaluate(el => el.innerText, titleElement);
+      console.log("Title: " + title);
+
+      // Get the price
+      var priceElement = await page.$("[data-test='price']");
+      const price = await page.evaluate(el => el.innerText, priceElement);
+      console.log("Price: " + parseFloat(price));
+
+      // Go to the basket.
+      var basketBtn = await page.$("[data-test='basket-button']");
+      basketBtn.click();
       console.log("At basket");
+
+      await page.waitFor(timeout);
+
+      // Log the current url.
+      var url = page.url();
+      console.log("Page at: " + url);
   
+      // Check for the highest number in the quantity select.
       let maxVal: number | undefined = await page.evaluate(() => {
         let m: number = 0;
         
@@ -47,9 +82,11 @@ puppeteer.launch().then(async browser => {
         return m;
       });
       
+      // If the max value is undefined then we can select 'meer'.
       if (maxVal == undefined) {
         console.log("Max val is undefined");
 
+        // Select meer.
         await page.select('#tst_quantity_dropdown', 'meer');
   
         console.log("Select more");
@@ -60,17 +97,20 @@ puppeteer.launch().then(async browser => {
           element.focus();
         });
 
+        // Enter 500
         await page.type('input[type=tel]', '500');
 
         console.log("Set q to 500");
   
+        // Press ok.
         const okBtn = await page.$('.js_quantity_overlay_ok');
         await okBtn.click();
         
         console.log("Click ok");
 
-        await page.waitFor(500);
+        await page.waitFor(timeout);
 
+        // Query the available quantity.
         var availableQ = await page.evaluate(() => {
           var e = document.querySelector('#tst_quantity_dropdown') as HTMLSelectElement;
           return e.options[e.selectedIndex].value;
@@ -82,17 +122,20 @@ puppeteer.launch().then(async browser => {
         console.log("Max value: " + maxVal);
       }
   
+      // Remove it from the basket.
       const removeBtn = await page.$('#tst_remove_from_basket');
       await removeBtn.click();
 
-      await page.waitFor(500);
+      await page.waitFor(timeout);
 
+      // Close page.
       page.close(); 
     }
 
     console.log("Done.");
   }
   catch (error){
+    console.log("Error");
     console.error(error);
   }
 });
