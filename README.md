@@ -21,6 +21,6 @@ node .\scraper.js
 
 ## TODO:
 - [x] Make a list of urls configurable
-- [ ] Store data in a database
+- [x] Store data in a database
 - [ ] Run solution in a docker container
 - [ ] Orchestrate an execution 4 times a day
